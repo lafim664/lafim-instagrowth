@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lafim InstaGrowth Engine</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+body{margin:0;font-family:system-ui;background:#020617;color:white}
+.app{padding:12px}
+.box{background:#020617;border:1px solid #1e293b;padding:12px;border-radius:12px;margin-top:10px}
+input,select,button{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:none;font-size:14px}
+button{background:#2563eb;color:white;font-weight:bold}
+pre{background:#0f172a;padding:10px;border-radius:8px;margin-top:6px;white-space:pre-wrap;}
+</style>
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+<div class="app">
+<h2>⚡ Lafim InstaGrowth Engine</h2>
+<div class="box" id="authBox">
+<h3>Login / Sign Up</h3>
+<input id="email" placeholder="Email">
+<input id="password" placeholder="Password" type="password">
+<select id="plan">
+<option value="Free">Free</option>
+<option value="Pro">Pro</option>
+<option value="Enterprise">Enterprise</option>
+</select>
+<button onclick="signup()">Sign Up</button>
+<button onclick="login()">Login</button>
+<div id="authMsg"></div>
+</div>
+<div class="box" id="dashboard" style="display:none">
+<h3>Dashboard</h3>
+<p id="userInfo"></p>
+<button onclick="startGrowth()">⚡ Growth Engine</button>
+<button onclick="startTraffic()">🚀 Traffic Engine</button>
+<button onclick="startAutomation()">🔁 Automation Engine</button>
+<button onclick="startBilling()">💳 Billing</button>
+<button onclick="showAdmin()">🛠 Admin Panel</button>
+<button onclick="logout()">Logout</button>
+<pre id="log"></pre>
+</div>
+<div class="box" id="adminPanel" style="display:none">
+<h3>Admin Panel</h3>
+<pre id="adminLog">Users, Campaigns, Analytics here...</pre>
+<button onclick="closeAdmin()">Close Admin</button>
+</div>
+</div>
+<script>
+const supabaseUrl = 'YOUR_SUPABASE_URL';
+const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+const stripeKey = 'YOUR_STRIPE_PUBLISHABLE_KEY';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+async function signup(){
+  const email=document.getElementById('email').value;
+  const password=document.getElementById('password').value;
+  const plan=document.getElementById('plan').value;
+  const {user,error}=await supabase.auth.signUp({email,password});
+  if(user){
+    await supabase.from('users').insert([{id:user.id,email:user.email,plan}]);
+    document.getElementById('authMsg').innerText='Signup success!';
+  } else {document.getElementById('authMsg').innerText=error.message;}
+}
+async function login(){
+  const email=document.getElementById('email').value;
+  const password=document.getElementById('password').value;
+  const {user,error}=await supabase.auth.signInWithPassword({email,password});
+  if(user){
+    document.getElementById('authBox').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    document.getElementById('userInfo').innerText='Welcome, '+user.email;
+  } else {document.getElementById('authMsg').innerText=error.message;}
+}
+async function logout(){
+  await supabase.auth.signOut();
+  document.getElementById('authBox').style.display='block';
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('adminPanel').style.display='none';
+  document.getElementById('log').innerText="";
+}
+function startGrowth(){log("⚡ Growth Engine Started\nOptimizing reach\nAudience modeling\nSignals amplified");}
+function startTraffic(){log("🚀 Traffic Engine Started\nTraffic routing\nConversion tracking\nFunnels live");}
+function startAutomation(){log("🔁 Automation Engine Started\nWorkflows active\nEvents linked\nPipelines running");}
+async function startBilling(){
+  const plan = document.getElementById('plan').value;
+  try{
+    const { data, error } = await supabase.functions.invoke('createCheckout', { plan });
+    if(error){log("Stripe error: "+error.message); return;}
+    const stripe = Stripe(stripeKey);
+    stripe.redirectToCheckout({ sessionId: data.sessionId });
+  } catch(e){log("Billing error: "+e.message);}
+}
+function showAdmin(){document.getElementById('adminPanel').style.display='block';adminLog.innerText="Fetching users & campaigns...";}
+function closeAdmin(){document.getElementById('adminPanel').style.display='none';}
+function log(msg){document.getElementById('log').innerText+=msg+"\n";}
+setInterval(()=>{
+  const metrics=[
+    "Reach: "+Math.floor(Math.random()*100)+"%",
+    "Engagement: "+Math.floor(Math.random()*100)+"%",
+    "Traffic: "+Math.floor(Math.random()*100)+"%",
+    "Growth: "+Math.floor(Math.random()*100)+"%",
+    "Scale: "+Math.floor(Math.random()*100)+"%"
+  ];
+  document.getElementById('log').innerText=metrics.join("\n");
+},10000);
+</script>
+</body>
+</html>
